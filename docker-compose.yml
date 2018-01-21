@@ -1,0 +1,61 @@
+version: '2'
+
+services:
+  # mysqldb:
+  #   image: mysql:latest
+  #   hostname: mysqldb
+  #   environment:
+  #     - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+  #     - MYSQL_DATABASE=diklat
+  #   ports:
+  #     - "3306:3306"
+  #
+  # phpmyadmin:
+  #   image: phpmyadmin/phpmyadmin
+  #   hostname: phpmyadmin
+  #   environment:
+  #     - PMA_USER=root
+  #     - PMA_PASSWORD=
+  #   depends_on:
+  #       - mysqldb
+  #   links:
+  #     - mysqldb:db
+  #   ports:
+  #     - "8888:80"
+
+  sqlserver:
+    # image: microsoft/mssql-server-linux:2017-latest
+    build: mssql-server
+    hostname: sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_PID=Developer
+      - SA_PASSWORD=<YourStrong!Passw0rd>
+      - MSSQL_DB=oauthdb
+      - MSSQL_USER=me
+      - MSSQL_PASSWORD=<YourStrong!Passw0rd>
+    # ports:
+    #   - "1433:1433"
+
+  adminer:
+    # image: adminer
+    build: adminer-sqlsrv
+    depends_on:
+      - sqlserver
+    links:
+      - sqlserver:db
+    ports:
+      - "8081:8080"
+    command: php -S [::]:8080 -t /var/www/html
+
+  apache-php:
+    build: php-docker
+    volumes:
+      - ./web:/var/www/html
+    depends_on:
+        - sqlserver
+    links:
+      - sqlserver:db
+    ports:
+      - "8080:80"
+    command: apache2-foreground
